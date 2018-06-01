@@ -12,7 +12,7 @@ const session = require('express-session');
 const userController = require('./controllers/userController');
 const friendController = require('./controllers/friendController');
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 app.use(session({
 	secret: process.env.SECRET,
