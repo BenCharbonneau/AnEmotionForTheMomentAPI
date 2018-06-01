@@ -12,6 +12,8 @@ const session = require('express-session');
 const userController = require('./controllers/userController');
 const friendController = require('./controllers/friendController');
 
+const PORT = process.env.PORT;
+
 app.use(session({
 	secret: process.env.SECRET,
 	resave: false,
@@ -43,4 +45,4 @@ app.get('/',(req,res) => {
 	res.json({message: "Here"});
 })
 
-http.listen(3000);
+http.listen(PORT);
