@@ -44,17 +44,24 @@ module.exports = function(io,db) {
 		try {
 
 			const user = await Users.doc(req.params.id).get();
-			if (user) {
+
+			if (user && (req.session.admin || user.id === req.session.userId)) {
 				res.json({
 					status: 200,
 					message: "Successfully found user.",
 					user: user.data()
 				})
 			}
-			else {
+			else if (!user) {
 				res.json({
 					status: 200,
 					message: "Could not find specified user."
+				})
+			}
+			else {
+				res.json({
+					status: 403,
+					message: "You are not authorized to access this user's data."
 				})
 			}
 			
@@ -66,28 +73,41 @@ module.exports = function(io,db) {
 
 	router.patch('/emotion/:id', async (req,res,next) => {
 		try {
-			const user = await Users.doc(req.params.id).update({emotion: req.body.emotion})
-			
-			const batch = db.batch();
 
-			const friends = await Friendships.where(req.params.id,">"," ").get();
+			const userDoc = await Users.doc(req.params.id)
+			const user = userDoc.get();
 
-			const emotionData = {}
-			emotionData[req.params.id] = req.body.emotion;
+			if (!req.session.admin && userDoc.id !== req.session.userId) {
+				res.json({
+					status: 403,
+					message: "You are not authorized to change this user's emotion."
+				})
+			}
+			else {
+				await userDoc.update({emotion: req.body.emotion})
+				
+				res.json({
+					status: 200,
+					message: "Successfully updated your emotion."
+				})
 
-			friends.docs.forEach((doc) => {
-				const friendReq = doc.data();
-				if (friendReq.accepted) {
-					batch.update(doc.ref, emotionData);
-				}	
-			})
+				const batch = db.batch();
 
-			batch.commit()
+				const friends = await Friendships.where(req.params.id,">"," ").get();
 
-			res.json({
-				status: 200,
-				message: "Successfully updated your emotion."
-			})
+				const emotionData = {}
+				emotionData[req.params.id] = req.body.emotion;
+
+				friends.docs.forEach((doc) => {
+					const friendReq = doc.data();
+					if (friendReq.accepted) {
+						batch.update(doc.ref, emotionData);
+					}	
+				})
+
+				batch.commit()
+			}
+
 		}
 		catch (err) {
 			next(err);
@@ -98,10 +118,16 @@ module.exports = function(io,db) {
 		try {
 
 			const userQuery = await Users.where('username', '==', req.body.username).get();
-			const user = userQuery.docs[0].data();
+			const userDoc = userQuery.docs[0]
+			const user = userDoc.data();
 			const id = userQuery.docs[0].id
 
 			if (user && bcrypt.compareSync(req.body.password,user.password)) {
+				
+				req.session.loggedIn = true;
+				req.session.userId = userDoc.id;
+				if (user.admin) req.session.admin = true;
+
 				res.json({
 					status: 200,
 					message: "Successfully logged in.",
@@ -127,7 +153,12 @@ module.exports = function(io,db) {
 				let { password } = req.body;
 				password = bcrypt.hashSync(password,bcrypt.genSaltSync(10));
 				req.body.password = password;
+
 				const createdUser = await Users.add(req.body);
+
+				req.session.loggedIn = true;
+				req.session.userId = createdUser.id;
+
 				res.json({
 					status: 200,
 					message: "Successfully registered.",
