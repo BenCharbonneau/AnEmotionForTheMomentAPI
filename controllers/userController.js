@@ -119,20 +119,28 @@ module.exports = function(io,db) {
 
 			const userQuery = await Users.where('username', '==', req.body.username).get();
 			const userDoc = userQuery.docs[0]
-			const user = userDoc.data();
-			const id = userQuery.docs[0].id
+			if (userDoc) {
+				const user = userDoc.data();
+				const id = userDoc.id;
 
-			if (user && bcrypt.compareSync(req.body.password,user.password)) {
-				
-				req.session.loggedIn = true;
-				req.session.userId = userDoc.id;
-				if (user.admin) req.session.admin = true;
+				if (user && bcrypt.compareSync(req.body.password,user.password)) {
+					
+					req.session.loggedIn = true;
+					req.session.userId = userDoc.id;
+					if (user.admin) req.session.admin = true;
 
-				res.json({
-					status: 200,
-					message: "Successfully logged in.",
-					user: { username: user.username, id: id }
-				})
+					res.json({
+						status: 200,
+						message: "Successfully logged in.",
+						user: { username: user.username, id: id }
+					})
+				}
+				else {
+					res.json({
+						status: 200,
+						message: "Invalid username and password."
+					})
+				}
 			}
 			else {
 				res.json({
