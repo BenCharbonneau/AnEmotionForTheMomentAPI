@@ -29,7 +29,7 @@ app.use(function isAuthenticated(req,res,next) {
   if (req.session.loggedIn) return next();
 
   res.json({
-  	status: 200,
+  	status: 403,
   	message: "You must be logged in to do this."
   })
 })
@@ -42,7 +42,10 @@ app.use('/users',userController(io,db))
 app.use('/friends',friendController(io,db));
 
 app.get('/',(req,res) => {
-	res.json({message: "Here"});
+	res.json({
+    status: 200,
+    message: "Check the API documentation at https://github.com/BenCharbonneau/AnEmotionForTheMomentAPI."
+  });
 })
 
 http.listen(PORT);

@@ -7,16 +7,16 @@ module.exports = function(io,db) {
 	const Users = db.collection("users");
 	const Friendships = db.collection("friendships");
 
-	Users.onSnapshot((usersSnap) => {
-		const users = [];
+	// Users.onSnapshot((usersSnap) => {
+	// 	const users = [];
 
-		usersSnap.docs.forEach((doc) => {
-			const user = doc.data();
-			users.push({username: user.username, id: doc.id})
-		})
+	// 	usersSnap.docs.forEach((doc) => {
+	// 		const user = doc.data();
+	// 		users.push({username: user.username, id: doc.id})
+	// 	})
 
-		io.emit('userlist',users)
-	})
+	// 	io.emit('userlist',users)
+	// })
 
 	router.get('/', async (req,res,next) => {
 		try {
