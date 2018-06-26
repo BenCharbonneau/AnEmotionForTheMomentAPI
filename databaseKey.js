@@ -1,3 +1,4 @@
+//database key for firebase with private information extracted to the environment files
 require('dotenv').config()
 
 const keyJSON = {

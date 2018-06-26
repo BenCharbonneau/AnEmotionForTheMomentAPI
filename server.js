@@ -9,11 +9,15 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 
+//import controllers
 const userController = require('./controllers/userController');
 const friendController = require('./controllers/friendController');
 
 const PORT = process.env.PORT || 3000;
 
+//MIDDLEWARE
+
+//set up user sessions
 app.use(session({
 	secret: process.env.SECRET,
 	resave: false,
@@ -21,6 +25,7 @@ app.use(session({
 	cookie: { secure: (process.env.COOKIE_SECURE === 'true') }
 }))
 
+//authenticate requests
 app.use(function isAuthenticated(req,res,next) {
   if (req.url === '/' || req.url === '/users/login' || req.url === '/users/register') {
   	return next();
@@ -34,13 +39,20 @@ app.use(function isAuthenticated(req,res,next) {
   })
 })
 
+//set up cors
 app.use(cors());
+
+//parse the request body into req.body
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
+//look for routes in the controllers
 app.use('/users',userController(io,db))
 app.use('/friends',friendController(io,db));
 
+//END MIDDLEWARE
+
+//default route
 app.get('/',(req,res) => {
 	res.json({
     status: 200,
@@ -48,4 +60,5 @@ app.get('/',(req,res) => {
   });
 })
 
+//start listening for requests to the server
 http.listen(PORT);
